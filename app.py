@@ -8,66 +8,40 @@ This is where we define the various css items to fetch as well as the layout of 
 import dash
 from dash import html
 import dash_bootstrap_components as dbc
-from flask import Flask
-from flask_login import LoginManager
-import os
 
-# local imports
 
-from components.login import User, login_location
 from components import navbar, footer
 
-server = Flask(__name__)
-app = dash.Dash(
-    __name__,
-    server=server,
-    use_pages=True,    # turn on Dash pages
-    external_stylesheets=[
-        dbc.themes.BOOTSTRAP,
-        dbc.icons.FONT_AWESOME
-    ],  # fetch the proper css items we want
-    meta_tags=[
-        {   # check if device is a mobile device. This is a must if you do any mobile styling
-            'name': 'viewport',
-            'content': 'width=device-width, initial-scale=1'
-        }
-    ],
-    suppress_callback_exceptions=True,
-    title='Dash app structure'
-)
+import dash_bootstrap_components as dbc
+from dash import html, dcc
+from dash.dependencies import Input, Output
+import components
+import pages
 
-server.config.update(SECRET_KEY=os.getenv('SECRET_KEY'))
+app = dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
+server=app.server
 
-# Login manager object will be used to login / logout users
-login_manager = LoginManager()
-login_manager.init_app(server)
-login_manager.login_view = '/login'
+nav= components.navbar.navbar
 
-@login_manager.user_loader
-def load_user(username):
-    """This function loads the user by user id. Typically this looks up the user from a user database.
-    We won't be registering or looking up users in this example, since we'll just login using LDAP server.
-    So we'll simply return a User object with the passed in username.
-    """
-    return User(username)
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    nav,
+    html.Div(id='page-content', children=[]),
+])
 
-def serve_layout():
-    '''Define the layout of the application'''
-    return html.Div(
-        [
-            login_location,
-            navbar,
-            dbc.Container(
-                dash.page_container,
-                class_name='my-2'
-            ),
-            footer
-        ]
-    )
+# Create the callback to handle mutlipage inputs
+@app.callback(Output('page-content', 'children'),
+              [Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/pages/home':
+        return pages.home.layout
+    if pathname == '/pages/nowcast':
+        return pages.nowcast.layout
+    if pathname == '/pages/statistics':
+        return pages.statistics.layout
+    else: # if redirected to unknown link
+        return "404 Page Error! Please choose a link"
 
-
-app.layout = serve_layout   # set the layout to the serve_layout function
-server = app.server         # the server is needed to deploy the application
 
 if __name__ == "__main__":
     server.run_server(debug=True)
