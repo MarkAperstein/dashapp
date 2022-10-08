@@ -10,38 +10,35 @@ from dash import html
 import dash_bootstrap_components as dbc
 
 
-from components import navbar, footer
-
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 from dash.dependencies import Input, Output
-import components
-import pages
+from components import navbar
+from pages import home,statistics,nowcast
 
 app = dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
-server=app.server
+nav= navbar.navbar
 
-nav= components.navbar.navbar
-
-app.layout = html.Div([
+app.layout=html.Div([
     dcc.Location(id='url', refresh=False),
     nav,
-    html.Div(id='page-content', children=[]),
+    html.Div(id='page-content', children=[home.layout]),
 ])
 
+first_time=True
 # Create the callback to handle mutlipage inputs
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/pages/home':
-        return pages.home.layout
+        return home.layout
     if pathname == '/pages/nowcast':
-        return pages.nowcast.layout
+        return nowcast.layout
     if pathname == '/pages/statistics':
-        return pages.statistics.layout
-    else: # if redirected to unknown link
-        return "404 Page Error! Please choose a link"
+        return statistics.layout
+    #else: # if redirected to unknown link
+    #    return "404 Page Error! Please choose a link"
 
 
 if __name__ == "__main__":
-    server.run_server(debug=True)
+    app.run_server(debug=True)
