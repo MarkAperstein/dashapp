@@ -36,8 +36,8 @@ def display_page(pathname):
         return nowcast.layout
     if pathname == '/pages/statistics':
         return statistics.layout
-    #else: # if redirected to unknown link
-    #    return "404 Page Error! Please choose a link"
+    else: # if redirected to unknown link
+        return "404 Page Error! Please choose a link"
 
 
 if __name__ == "__main__":
