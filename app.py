@@ -22,7 +22,7 @@ nav= navbar.navbar
 app.layout=html.Div([
     dcc.Location(id='url', refresh=False),
     nav,
-    html.Div(id='page-content', children=[home.layout]),
+    html.Div(id='page-content', children=[]),
 ])
 
 first_time=True
