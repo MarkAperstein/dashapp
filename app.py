@@ -1,26 +1,74 @@
-from dash import Dash, dcc, html, Input, Output
+# notes
+'''
+This file is for housing the main dash application.
+This is where we define the various css items to fetch as well as the layout of our application.
+'''
+
+# package imports
+import dash
+from dash import html
+import dash_bootstrap_components as dbc
+from flask import Flask
+from flask_login import LoginManager
 import os
 
+# local imports
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+from components.login import User, login_location
+from components import navbar, footer
 
-app = Dash(__name__, external_stylesheets=external_stylesheets)
+server = Flask(__name__)
+app = dash.Dash(
+    __name__,
+    server=server,
+    use_pages=True,    # turn on Dash pages
+    external_stylesheets=[
+        dbc.themes.BOOTSTRAP,
+        dbc.icons.FONT_AWESOME
+    ],  # fetch the proper css items we want
+    meta_tags=[
+        {   # check if device is a mobile device. This is a must if you do any mobile styling
+            'name': 'viewport',
+            'content': 'width=device-width, initial-scale=1'
+        }
+    ],
+    suppress_callback_exceptions=True,
+    title='Dash app structure'
+)
 
-server = app.server
+server.config.update(SECRET_KEY=os.getenv('SECRET_KEY'))
 
-app.layout = html.Div([
-    html.H2('Hello World'),
-    dcc.Dropdown(['LA', 'NYC', 'MTL'],
-        'LA',
-        id='dropdown'
-    ),
-    html.Div(id='display-value')
-])
+# Login manager object will be used to login / logout users
+login_manager = LoginManager()
+login_manager.init_app(server)
+login_manager.login_view = '/login'
 
-@app.callback(Output('display-value', 'children'),
-                [Input('dropdown', 'value')])
-def display_value(value):
-    return f'You have selected {value}'
+@login_manager.user_loader
+def load_user(username):
+    """This function loads the user by user id. Typically this looks up the user from a user database.
+    We won't be registering or looking up users in this example, since we'll just login using LDAP server.
+    So we'll simply return a User object with the passed in username.
+    """
+    return User(username)
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+def serve_layout():
+    '''Define the layout of the application'''
+    return html.Div(
+        [
+            login_location,
+            navbar,
+            dbc.Container(
+                dash.page_container,
+                class_name='my-2'
+            ),
+            footer
+        ]
+    )
+
+
+app.layout = serve_layout   # set the layout to the serve_layout function
+server = app.server         # the server is needed to deploy the application
+
+if __name__ == "__main__":
+    app.run_server(debug=True
+    )
